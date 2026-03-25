@@ -4,23 +4,32 @@
  * The above comment directs Apps Script to limit the scope of file
  * access for this add-on. It specifies that this add-on will only
  * attempt to read or modify the files in which the add-on is used,
- * and not all of the user's files. The authorization request message
- * presented to users will reflect this limited scope.
+ * and not all of the user's files.
  */
 
-/**
- * A global constant String holding the title of the add-on. This is
- * used to identify the add-on in the notification emails.
- */
-var ADDON_TITLE = 'GIFT Quiz Editor';
-var defaultGiftSourceText = "The sun sets in the east. {False}";
+const ADDON_TITLE = 'GIFT Quiz Editor';
+
+const defaultGiftSourceText = [
+  '// Welcome to GIFT Quiz Editor!',
+  '// Below are sample questions showcasing different types.',
+  '// Edit them or replace with your own GIFT-formatted questions.',
+  '',
+  '::True or False:: The sun rises in the east. {TRUE}',
+  '',
+  '::Multiple Choice:: What color is the sky on a clear day? {',
+  '  =Blue # Correct!',
+  '  ~Green # Not quite.',
+  '  ~Red # Not quite.',
+  '}',
+  '',
+  '::Short Answer:: What is the capital of France? {=Paris =paris}',
+  '',
+  '::Essay:: Describe the water cycle in your own words. {}',
+  ''
+].join('\n');
 
 /**
  * Adds a custom menu to the active form to show the add-on sidebar.
- *
- * @param {object} e The event parameter for a simple onOpen trig-ger. To
- *     determine which authorization mode (ScriptApp.AuthMode) the trig-ger is
- *     running in, inspect e.authMode.
  */
 function onOpen(e) {
   FormApp.getUi()
@@ -32,36 +41,32 @@ function onOpen(e) {
 
 /**
  * Runs when the add-on is installed.
- *
- * @param {object} e The event parameter for a simple onInstall trig-ger. To
- *     determine which authorization mode (ScriptApp.AuthMode) the trig-ger is
- *     running in, inspect e.authMode. (In practice, onInstall trig-gers always
- *     run in AuthMode.FULL, but onOpen trig-gers may be AuthMode.LIMITED or
- *     AuthMode.NONE).
  */
 function onInstall(e) {
   onOpen(e);
 }
 
 /**
- * Opens a sidebar in the form containing the add-on's user interface for
- * configuring the notifications this add-on will produce.
+ * Opens the sidebar with the GIFT editor.
  */
 function showSidebar() {
-  FormApp.getActiveForm().setIsQuiz(true); // TODO ask user before doing this?
-  var giftSourceText = PropertiesService.getDocumentProperties().getProperty(FormApp.getActiveForm().getId());
+  FormApp.getActiveForm().setIsQuiz(true);
+  let giftSourceText = PropertiesService.getDocumentProperties().getProperty(FormApp.getActiveForm().getId());
   if (!giftSourceText) {
     giftSourceText = defaultGiftSourceText;
   }
-  var html = HtmlService.createTemplateFromFile('Sidebar');
+  const html = HtmlService.createTemplateFromFile('Sidebar');
   html.giftSourceText = giftSourceText;
-  var htmlOutput = html.evaluate().setTitle(ADDON_TITLE);
+  const htmlOutput = html.evaluate().setTitle(ADDON_TITLE);
   FormApp.getUi().showSidebar(htmlOutput);
 }
 
+/**
+ * Shows the About dialog.
+ */
 function showAbout() {
-  var ui = HtmlService.createHtmlOutputFromFile('About')
+  const ui = HtmlService.createHtmlOutputFromFile('About')
     .setWidth(420)
-    .setHeight(270);
+    .setHeight(340);
   FormApp.getUi().showModalDialog(ui, 'About GIFT Quiz Editor');
 }

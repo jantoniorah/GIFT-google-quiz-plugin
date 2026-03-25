@@ -1,152 +1,248 @@
 <script>
-    var LOADING_CLASS_CSS = 'lds-ellipsis';
-    // GAS doesn't grok Map() at least I couldn't get it to work
-    const sampleMap = {};
-    sampleMap['DESC'] = '::Instructions::\nYou can use your pencil and paper for these next math questions.';
-    sampleMap['TF'] = 'The sun rises in the east.{T}';
-    sampleMap['TFF'] =
-        '//True or false with feedback\nGrant is buried in Grant\'s tomb.{FALSE#wrong answer feedback\N#right answer feedback}';
-    sampleMap['MC'] =
-        '// multiple choice with specific feedback\n::Q2:: What\'s between orange and green in the spectrum?\n{=yellow # correct! ~red # wrong, it\'s yellow ~blue # wrong, it\'s yellow}';
-    sampleMap['MCMA'] =
-        '// multiple choice with multiple correct answers, different weights(checkbox)\nWhat two people are entombed in Grant\'s tomb? {\n~%-100%No one\n~%50%Grant # yup its good\n~%50%Grant\'s wife\n ~%-100%Grant\'s father\n}';
-    sampleMap['NMS'] =
-        '// Numerical question\n::Numerical question::\nWhat\'s two plus four?\n{#\n=%100%6:0#Good job it IS 6!\n}';
-    sampleMap['NM'] =
-        '//Custom Validation not yet supported\nWhat is the value of pi (to 3 decimal places)? {#3.1415:0.0005}.';
-    sampleMap['SA'] = 'Two plus two equals {=four =4}';
-    sampleMap['MATCH'] =
-        'Match the following countries with their corresponding capitals. {\n=Canada -> Ottawa\n=Italy  -> Rome\n=Japan  -> Tokyo\n=India  -> New Delhi\n}';
-    sampleMap['ES'] = 'Write a short biography of Dag Hammarskjöld. {}';
-    /**
-     * On document load, assign required handlers to each element,
-     * and attempt to load any saved settings.
-     */
-    $(function () {
-        $('#add-sample').click(function (event) {
-            var e = document.getElementById("sample");
-            var chosenSampleKey = e.options[e.selectedIndex].value;
-            $('#gift-code').val($('#gift-code').val() + '\n\n' + sampleMap[chosenSampleKey] + '\n\n');
+    const LOADING_CLASS_CSS = 'active';
+    const AUTOSAVE_KEY = 'gift_editor_autosave';
+
+    const sampleMap = {
+        'DESC': '::Instructions::\nYou can use your pencil and paper for these next math questions.',
+        'TF': 'The sun rises in the east.{T}',
+        'TFF': '//True or false with feedback\nGrant is buried in Grant\'s tomb.{FALSE#wrong answer feedback#right answer feedback}',
+        'MC': '// multiple choice with specific feedback\n::Q2:: What\'s between orange and green in the spectrum?\n{=yellow # correct! ~red # wrong, it\'s yellow ~blue # wrong, it\'s yellow}',
+        'MCMA': '// multiple choice with multiple correct answers, different weights(checkbox)\nWhat two people are entombed in Grant\'s tomb? {\n~%-100%No one\n~%50%Grant # yup its good\n~%50%Grant\'s wife\n ~%-100%Grant\'s father\n}',
+        'NMS': '// Numerical question\n::Numerical question::\nWhat\'s two plus four?\n{#\n=%100%6:0#Good job it IS 6!\n}',
+        'NM': '//Custom Validation not yet supported\nWhat is the value of pi (to 3 decimal places)? {#3.1415:0.0005}.',
+        'SA': 'Two plus two equals {=four =4}',
+        'MATCH': 'Match the following countries with their corresponding capitals. {\n=Canada -> Ottawa\n=Italy  -> Rome\n=Japan  -> Tokyo\n=India  -> New Delhi\n}',
+        'ES': 'Write a short biography of Dag Hammarskjöld. {}',
+        'CAT': '$CATEGORY: My Category'
+    };
+
+    const typeIcons = {
+        'TF': '✓✗',
+        'MC': '◉',
+        'Essay': '✎',
+        'Matching': '↔',
+        'Short': 'Aa',
+        'Numerical': '#',
+        'Description': '§'
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const giftCode = document.getElementById('gift-code');
+        const addSampleBtn = document.getElementById('add-sample');
+        const createGiftBtn = document.getElementById('create-gift');
+        const appendGiftBtn = document.getElementById('append-gift');
+        const uploadBtn = document.getElementById('upload-gift');
+        const downloadBtn = document.getElementById('download-gift');
+        const fileInput = document.getElementById('file-input');
+
+        // Restore autosaved content if the textarea is at default
+        const saved = localStorage.getItem(AUTOSAVE_KEY);
+        if (saved && giftCode.value === giftCode.defaultValue) {
+            giftCode.value = saved;
+        }
+
+        // Initial validation
+        if (giftCode.value.trim()) {
+            validateGIFT();
+        }
+
+        addSampleBtn.addEventListener('click', () => {
+            const e = document.getElementById('sample');
+            const chosenSampleKey = e.options[e.selectedIndex].value;
+            giftCode.value += '\n\n' + sampleMap[chosenSampleKey] + '\n\n';
+            autosave();
+            validateGIFT();
         });
-        $('#create-gift').click(function (event) {
-            serverSidePreflight(event);
-            google.script.run
-                .withSuccessHandler(
-                    function (msg, element) {
-                        $('#create-gift').prop('disabled', false);
-                        $('#append-gift').prop('disabled', false);
-                        $('#error').remove();
-                        $('#loading').removeClass(LOADING_CLASS_CSS);
-                        showAlert("success", msg);
-                    })
-                .withFailureHandler(
-                    function (err, element) {
-                        $('#create-gift').prop('disabled', false);
-                        $('#append-gift').prop('disabled', false);
-                        $('#error').remove();
-                        $('#loading').removeClass(LOADING_CLASS_CSS);
-                        showAlert("error", err.message);
-                    })
-                .withUserObject(this)  // pass the button object (?)
-                .createForm($('#gift-code').val(), false); // don't append
+
+        createGiftBtn.addEventListener('click', () => submitFormToAppsScript(false));
+        appendGiftBtn.addEventListener('click', () => submitFormToAppsScript(true));
+
+        // File upload
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                giftCode.value = e.target.result;
+                autosave();
+                validateGIFT();
+            };
+            reader.readAsText(file);
+            fileInput.value = ''; // Reset so same file can be re-uploaded
         });
-        $('#append-gift').click(function (event) {
-            serverSidePreflight(event);
-            google.script.run
-                .withSuccessHandler(
-                    function (msg, element) {
-                        $('#create-gift').prop('disabled', false);
-                        $('#append-gift').prop('disabled', false);
-                        $('#error').remove();
-                        $('#loading').removeClass(LOADING_CLASS_CSS);
-                        showAlert("success", msg);
-                    })
-                .withFailureHandler(
-                    function (msg, element) {
-                        $('#create-gift').prop('disabled', false);
-                        $('#append-gift').prop('disabled', false);
-                        $('#error').remove();
-                        $('#loading').removeClass(LOADING_CLASS_CSS);
-                        showAlert("error", msg.toString());
-                    })
-                .withUserObject(this)
-                .createForm($('#gift-code').val(), true); // append
+
+        // File download
+        downloadBtn.addEventListener('click', () => {
+            const text = giftCode.value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'questions.gift';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        });
+
+        // Typing handler with autosave and debounced validation
+        let typingTimer;
+        const doneTypingInterval = 800;
+
+        giftCode.addEventListener('input', () => {
+            autosave();
+            clearTimeout(typingTimer);
+            if (giftCode.value.trim()) {
+                typingTimer = setTimeout(validateGIFT, doneTypingInterval);
+            } else {
+                clearAlerts();
+                updatePreview([]);
+            }
         });
     });
 
-    /**
-     * Inserts a div that contains an error message after a given element.
-     *
-     * @param msg The error message to display.
-     * @param element The element after which to display the error.
-     */
-    function showAlert(msgClass, msg, element) {
-        if (!element) {
-            element = $('#button-bar');
+    function autosave() {
+        try {
+            localStorage.setItem(AUTOSAVE_KEY, document.getElementById('gift-code').value);
+        } catch (e) {
+            // localStorage might be unavailable in some contexts
         }
-        var div = $('<div id="error" class="' + msgClass + '">' + msg + '</div>');
-        $(element).after(div);
-        //console.log("ShowAlert: " + msgClass + " " + msg);
     }
 
-    var typingTimer;
-    var doneTypingInterval = 1000;
+    function submitFormToAppsScript(append) {
+        clearAlerts();
+        showAlert('info', 'Processing GIFT...');
 
-    $('#gift-code').keyup(function () {
-        $("#error").remove();
-        clearTimeout(typingTimer);
-        if ($('#gift-code').val()) {
-            typingTimer = setTimeout(doneTyping, doneTypingInterval);
-        }
-    });
+        const createGiftBtn = document.getElementById('create-gift');
+        const appendGiftBtn = document.getElementById('append-gift');
+        const loadingDiv = document.getElementById('loading');
+        const giftCode = document.getElementById('gift-code').value;
 
-    function doneTyping() {
-        $('#error').remove();
-        var giftText = $('#gift-code').val();
-        showAlert("info", "Validating GIFT...");
+        createGiftBtn.disabled = true;
+        appendGiftBtn.disabled = true;
+        loadingDiv.classList.add(LOADING_CLASS_CSS);
+
+        google.script.run
+            .withSuccessHandler((msg) => {
+                createGiftBtn.disabled = false;
+                appendGiftBtn.disabled = false;
+                clearAlerts();
+                loadingDiv.classList.remove(LOADING_CLASS_CSS);
+                showAlert('success', msg);
+            })
+            .withFailureHandler((err) => {
+                createGiftBtn.disabled = false;
+                appendGiftBtn.disabled = false;
+                clearAlerts();
+                loadingDiv.classList.remove(LOADING_CLASS_CSS);
+                showAlert('error', typeof err === 'object' ? err.message : err.toString());
+            })
+            .createForm(giftCode, append);
+    }
+
+    function clearAlerts() {
+        const existing = document.getElementById('error');
+        if (existing) existing.remove();
+    }
+
+    function showAlert(msgClass, msg) {
+        clearAlerts();
+        const buttonBar = document.getElementById('button-bar');
+        const div = document.createElement('div');
+        div.id = 'error';
+        div.className = msgClass;
+        div.innerHTML = msg;
+        buttonBar.parentNode.insertBefore(div, buttonBar.nextSibling);
+    }
+
+    function validateGIFT() {
+        clearAlerts();
+        const giftText = document.getElementById('gift-code').value;
 
         try {
-            var output = giftParser.parse(giftText);
-            $('#error').remove();
-            showAlert("success", "Recognized " + output.length + " questions from GIFT.");
+            // Remove $CATEGORY lines before parsing
+            const cleanText = giftText.replace(/^\$CATEGORY:.*$/gm, '').trim();
+            if (!cleanText) {
+                updatePreview([]);
+                return;
+            }
+            const output = giftParser.parse(cleanText);
+            clearAlerts();
+            showAlert('success', `Recognized ${output.length} question${output.length === 1 ? '' : 's'}.`);
+            updatePreview(output);
         } catch (e) {
-            $('#error').remove();
-            showAlert("error", buildErrorMessage(giftText, e));
+            clearAlerts();
+            showAlert('error', buildErrorMessage(giftText, e));
+            updatePreview([]);
+        }
+    }
+
+    function updatePreview(questions) {
+        const preview = document.getElementById('question-preview');
+        if (!questions || questions.length === 0) {
+            preview.innerHTML = '<div class="preview-empty">No questions parsed yet.</div>';
+            return;
         }
 
+        let html = '';
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            const icon = typeIcons[q.type] || '?';
+            const title = q.title || truncate(stripPreviewHTML(q.stem.text), 50);
+            const typeBadge = q.type;
+            html += '<div class="preview-item">' +
+                '<span class="preview-icon">' + escapeHtml(icon) + '</span>' +
+                '<span class="preview-type">' + escapeHtml(typeBadge) + '</span>' +
+                '<span class="preview-title">' + escapeHtml(title) + '</span>' +
+                '</div>';
+        }
+        preview.innerHTML = html;
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        return str.length > len ? str.substring(0, len) + '…' : str;
+    }
+
+    function stripPreviewHTML(str) {
+        return (str || '').replace(/<(?:.|\n)*?>/gm, '');
+    }
+
+    function escapeHtml(unsafe) {
+        return (unsafe || '').toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     function buildErrorMessage(giftStr, err) {
-        var delta = 10;
-        var badGIFT = "";
-        var index = err.location.start.offset;
-        var paddingBefore = "";
-        var paddingAfter = "";
-        var underlinedText = "<u>" + giftStr.substring(err.location.start.offset, err.location.end.offset + 1) + "</u>";
+        if (!err.location) return escapeHtml(err.message || err.toString());
 
-        if (err.location.start.offset - delta > 0) {
-            paddingBefore = giftStr.substring(err.location.start.offset - delta, err.location.start.offset - 1);
-        } else if (err.location.start.offset != 0) {
-            paddingBefore = giftStr.substring(0, err.location.start.offset - 1);
+        const delta = 10;
+        const startOffset = err.location.start.offset;
+        const endOffset = err.location.end.offset;
+
+        let paddingBefore = "";
+        let paddingAfter = "";
+
+        if (startOffset - delta > 0) {
+            paddingBefore = giftStr.substring(startOffset - delta, startOffset);
+        } else {
+            paddingBefore = giftStr.substring(0, startOffset);
         }
 
-        if (err.location.end.offset + delta < giftStr.length) {
-            paddingAfter = giftStr.substring(err.location.end.offset + 2, err.location.end.offset + delta);
-        } else if (err.location.end.offset != giftStr.length) {
-            paddingAfter = giftStr.substring(err.location.end.offset + 2, giftStr.length);
+        if (endOffset + delta < giftStr.length) {
+            paddingAfter = giftStr.substring(endOffset + 1, endOffset + 1 + delta);
+        } else {
+            paddingAfter = giftStr.substring(endOffset + 1);
         }
 
-        badGIFT = paddingBefore + underlinedText + paddingAfter;
-        return "Line " + parseInt(err.location.start.line) + ", column " + parseInt(err.location.start.column) +
-            " near:<b> " + badGIFT + "</b><br> " + err.message;
+        const badStr = giftStr.substring(startOffset, endOffset + 1);
+        const badGIFT = escapeHtml(paddingBefore) + "<u>" + escapeHtml(badStr) + "</u>" + escapeHtml(paddingAfter);
 
-    }
-
-    function serverSidePreflight(event) {
-        $('#error').remove();
-            showAlert("info", "Processing GIFT...");
-            $('#create-gift').prop('disabled', true);
-            $('#append-gift').prop('disabled', true);
-            $('#loading').addClass(LOADING_CLASS_CSS);
+        return "Line " + err.location.start.line + ", column " + err.location.start.column +
+            " near: <b>" + badGIFT + "</b><br>" + escapeHtml(err.message);
     }
 </script>

@@ -1,230 +1,167 @@
-<!--
- * Copyright 2015 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- -->
-
 <!DOCTYPE html>
 <html>
-
 <head>
   <base target="_top">
   <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
-  <!-- The CSS package above applies Google styling to buttons and other elements. -->
-
   <style>
-    .branding-below {
-      bottom: 54px;
-      top: 0;
+    :root {
+      --accent: #4285f4;
+      --accent-hover: #3367d6;
+      --success-bg: #e8f5e9; --success-fg: #2e7d32; --success-border: #c8e6c9;
+      --info-bg: #e3f2fd; --info-fg: #1565c0; --info-border: #bbdefb;
+      --error-bg: #ffebee; --error-fg: #c62828; --error-border: #ffcdd2;
+      --border: #dadce0;
+      --bg-subtle: #f8f9fa;
     }
 
-    #error.success {
-      color: #008000;
-    }
+    body { margin: 0; font-family: 'Google Sans', Roboto, Arial, sans-serif; font-size: 13px; }
 
-    #error.info {
-      color: #000080;
-    }
+    .sidebar.branding-below { bottom: 40px; top: 0; padding: 10px 12px; overflow-y: auto; }
 
-    #error {
-      margin-bottom: 6px;
-      height: 100px;
-      overflow-x: hidden;
-      overflow-y: scroll;
-    }
+    /* --- Alert messages --- */
+    #error { margin-top: 8px; margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; font-size: 12px; max-height: 80px; overflow-y: auto; }
+    #error.success { background: var(--success-bg); color: var(--success-fg); border: 1px solid var(--success-border); }
+    #error.info    { background: var(--info-bg);    color: var(--info-fg);    border: 1px solid var(--info-border); }
+    #error.error   { background: var(--error-bg);   color: var(--error-fg);   border: 1px solid var(--error-border); }
 
-    .branding-text {
-      left: 7px;
-      position: relative;
-      top: 3px;
-    }
+    /* --- Sample selector --- */
+    .add-sample { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    #sample { flex: 1; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: #fff; }
+    #add-sample { white-space: nowrap; font-size: 12px; }
 
-    .logo {
-      vertical-align: middle;
-    }
-
+    /* --- Textarea --- */
     textarea {
-      resize: vertical;
-      width: 100%;
-      height: 250px;
-      margin-bottom: 6px;
+      resize: vertical; width: 100%; height: 200px; margin-bottom: 4px;
+      font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.5;
+      padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+      box-sizing: border-box; background: #fff; transition: border-color 0.2s;
     }
+    textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(66,133,244,0.15); }
+    textarea::placeholder { color: #9aa0a6; }
 
-    .width-100 {
-      width: 100%;
-      box-sizing: border-box;
-      -webkit-box-sizing: border-box;
-      ‌-moz-box-sizing: border-box;
+    /* --- File I/O buttons --- */
+    .file-actions { display: flex; gap: 6px; margin-bottom: 8px; }
+    .file-actions button {
+      flex: 1; font-size: 11px; padding: 5px 0; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--bg-subtle); cursor: pointer; transition: background 0.15s;
     }
+    .file-actions button:hover { background: #e8eaed; }
+    #file-input { display: none; }
 
-    .add-sample {
-      margin-bottom: 6px;
+    /* --- Action buttons --- */
+    .action-buttons { display: flex; gap: 6px; margin-bottom: 8px; }
+    .action-buttons button {
+      flex: 1; padding: 7px 0; border-radius: 6px; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
     }
+    #create-gift { background: var(--accent); color: #fff; border: none; }
+    #create-gift:hover:not(:disabled) { background: var(--accent-hover); }
+    #append-gift { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+    #append-gift:hover:not(:disabled) { background: #e8f0fe; }
+    .action-buttons button:disabled { opacity: 0.5; cursor: default; }
 
-    .h4-sample {
-      display: block;
-      margin-bottom: 8px;
-      margin-top: 2px;
-    }
-
-    #sample {
-      width: 180px;
-    }
-
-    #add-sample {
-      border-bottom: 2px;
-    }
-
-    label {
-      font-weight: bold;
-    }
-
-    #creator-options,
-    #respondent-options {
-      background-color: #eee;
-      border-color: #eee;
-      border-width: 5px;
-      border-style: solid;
-      display: none;
-    }
-
-    #creator-email,
-    #respondent-email,
-    #button-bar,
-    #submit-subject {
-      margin-bottom: 10px;
-    }
-
-    #response-step {
-      display: inline;
-    }
-
-    /* CSS animated spinner */
-    .lds-ellipsis {
-      display: inline-block;
-      position: relative;
-      width: 32px;
-      height: 32px;
-    }
-
+    /* --- Loading spinner --- */
+    .lds-ellipsis { display: none; text-align: center; padding: 4px 0; }
+    .lds-ellipsis.active { display: block; }
     .lds-ellipsis div {
-      position: absolute;
-      top: 27px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #f88;
-      animation-timing-function: cubic-bezier(0, 1, 1, 0);
+      display: inline-block; width: 8px; height: 8px; margin: 0 2px;
+      border-radius: 50%; background: var(--accent);
+      animation: lds-bounce 0.6s infinite alternate;
     }
+    .lds-ellipsis div:nth-child(2) { animation-delay: 0.15s; }
+    .lds-ellipsis div:nth-child(3) { animation-delay: 0.3s; }
+    .lds-ellipsis div:nth-child(4) { animation-delay: 0.45s; }
+    @keyframes lds-bounce { from { opacity: 0.3; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
 
-    .lds-ellipsis div:nth-child(1) {
-      left: 6px;
-      animation: lds-ellipsis1 0.6s infinite;
+    /* --- Question preview --- */
+    .preview-section { margin-top: 8px; }
+    .preview-header { font-size: 11px; font-weight: 500; color: #5f6368; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    #question-preview {
+      max-height: 180px; overflow-y: auto; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--bg-subtle);
     }
-
-    .lds-ellipsis div:nth-child(2) {
-      left: 6px;
-      animation: lds-ellipsis2 0.6s infinite;
+    .preview-item {
+      display: flex; align-items: center; gap: 6px; padding: 5px 8px;
+      border-bottom: 1px solid #eee; font-size: 12px;
     }
-
-    .lds-ellipsis div:nth-child(3) {
-      left: 26px;
-      animation: lds-ellipsis2 0.6s infinite;
+    .preview-item:last-child { border-bottom: none; }
+    .preview-icon { font-size: 12px; width: 20px; text-align: center; flex-shrink: 0; }
+    .preview-type {
+      font-size: 10px; font-weight: 600; background: #e8eaed; color: #5f6368;
+      padding: 1px 6px; border-radius: 4px; flex-shrink: 0;
     }
+    .preview-title { color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-empty { padding: 12px; text-align: center; color: #9aa0a6; font-size: 12px; }
 
-    .lds-ellipsis div:nth-child(4) {
-      left: 45px;
-      animation: lds-ellipsis3 0.6s infinite;
+    /* --- Branding bar --- */
+    .sidebar.bottom {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 8px 12px; background: #fff; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
     }
-
-    @keyframes lds-ellipsis1 {
-      0% {
-        transform: scale(0);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    @keyframes lds-ellipsis3 {
-      0% {
-        transform: scale(1);
-      }
-
-      100% {
-        transform: scale(0);
-      }
-    }
-
-    @keyframes lds-ellipsis2 {
-      0% {
-        transform: translate(0, 0);
-      }
-
-      100% {
-        transform: translate(19px, 0);
-      }
-    }
+    .branding-text { font-size: 11px; color: #80868b; }
+    .logo { vertical-align: middle; }
   </style>
 </head>
-
 <body>
   <div class="sidebar branding-below">
-    <h4 class="h4-sample">Add sample</h4>
+    <!-- Sample selector -->
     <div class="add-sample">
       <select id="sample">
-        <option value="DESC">Description (Title text with help)</option>
-        <option value="TF">True or false</option>
-        <option value="TFF">True or false with feedback</option>
-        <option value="SA">Short answer</option>
-        <option value="MC">Multiple choice</option>
-        <option value="MCMA">Multiple choice, several correct answers</option>
+        <option value="DESC">Description</option>
+        <option value="TF">True / False</option>
+        <option value="TFF">True / False + feedback</option>
+        <option value="SA">Short Answer</option>
+        <option value="MC">Multiple Choice</option>
+        <option value="MCMA">Multiple Choice (checkboxes)</option>
         <option value="MATCH">Matching</option>
-        <option value="NMS">Numerical question with validation</option>
-        <option value="NM">Numerical question</option>
+        <option value="NMS">Numerical + validation</option>
+        <option value="NM">Numerical</option>
         <option value="ES">Essay</option>
+        <option value="CAT">Category (page break)</option>
       </select>
-      <button id="add-sample">Add</button>
+      <button id="add-sample">Insert</button>
     </div>
-    <form>
-      <textarea id="gift-code" rows="4" cols="50"><?= giftSourceText ?></textarea>
 
-      <div class="block" id="button-bar">
-        <!--button class="action" id="validate-gift">Validate</button-->
-        <button class="create" title="Replace the current form with GIFT questions" id="create-gift">Replace form</button>
-        <button title="Append GIFT questions to end of current form" id="append-gift">Append to form</button>
-        <div id="loading">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-      </div>
-
+    <!-- Editor -->
+    <form onsubmit="return false;">
+      <textarea id="gift-code" placeholder="Enter GIFT formatted questions here..."><?= giftSourceText ?></textarea>
     </form>
+
+    <!-- File I/O -->
+    <div class="file-actions">
+      <button id="upload-gift" title="Import a .gift file">📂 Upload .gift</button>
+      <button id="download-gift" title="Download as .gift file">💾 Download .gift</button>
+      <input type="file" id="file-input" accept=".gift,.txt">
+    </div>
+
+    <!-- Action buttons -->
+    <div class="block" id="button-bar">
+      <div class="action-buttons">
+        <button title="Replace all questions in the current form" id="create-gift">Replace form</button>
+        <button title="Append questions to the end of the current form" id="append-gift">Append to form</button>
+      </div>
+      <div id="loading" class="lds-ellipsis">
+        <div></div><div></div><div></div><div></div>
+      </div>
+    </div>
+
+    <!-- Live preview -->
+    <div class="preview-section">
+      <div class="preview-header">Question Preview</div>
+      <div id="question-preview">
+        <div class="preview-empty">No questions parsed yet.</div>
+      </div>
+    </div>
   </div>
 
+  <!-- Branding -->
   <div class="sidebar bottom">
-    <img alt="Add-on logo" class="logo" width="25"
-      src="https://drive.google.com/uc?id=1T5Ul-xMkromAOx_cKAoEofZ7D8QxTj7L">
-    <span class="gray branding-text">GIFT Quiz Editor by fuhrmanator</span>
+    <img alt="Logo" class="logo" width="20" src="https://drive.google.com/uc?id=1T5Ul-xMkromAOx_cKAoEofZ7D8QxTj7L">
+    <span class="branding-text">GIFT Quiz Editor</span>
   </div>
 
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <?!= HtmlService.createHtmlOutputFromFile('gift-parser-globalsJS').getContent(); ?>
   <?!= HtmlService.createHtmlOutputFromFile('SidebarJS').getContent(); ?>
-
 </body>
-
 </html>
