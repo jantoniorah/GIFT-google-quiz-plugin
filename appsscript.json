@@ -6,5 +6,19 @@
   "oauthScopes": [
     "https://www.googleapis.com/auth/forms",
     "https://www.googleapis.com/auth/script.container.ui"
-  ]
+  ],
+  "addOns": {
+    "common": {
+      "name": "GIFT Quiz Editor Plus",
+      "logoUrl": "https://raw.githubusercontent.com/jantoniorah/GIFT-google-quiz-plugin/master/assets/logo.png",
+      "homepageTrigger": {
+        "runFunction": "onOpen"
+      }
+    },
+    "forms": {
+      "onFormOpenTrigger": {
+        "runFunction": "onOpen"
+      }
+    }
+  }
 }

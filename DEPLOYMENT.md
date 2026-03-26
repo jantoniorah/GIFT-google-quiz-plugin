@@ -35,35 +35,9 @@ Edit `.clasp.json` and replace the existing `scriptId` with your new one:
 
 ---
 
-## Step 3 — Update `appsscript.json`
+## Step 3 — Verify `appsscript.json`
 
-Replace the contents of `appsscript.json` with the following to properly declare it as a Forms add-on:
-
-```json
-{
-  "timeZone": "America/New_York",
-  "dependencies": {},
-  "exceptionLogging": "STACKDRIVER",
-  "oauthScopes": [
-    "https://www.googleapis.com/auth/forms",
-    "https://www.googleapis.com/auth/script.container.ui"
-  ],
-  "addOns": {
-    "common": {
-      "name": "GIFT Quiz Editor Plus",
-      "logoUrl": "https://www.gstatic.com/images/icons/material/system/2x/quiz_black_48dp.png",
-      "homepageTrigger": {
-        "runFunction": "onOpen"
-      }
-    },
-    "forms": {
-      "onFormOpenTrigger": {
-        "runFunction": "onOpen"
-      }
-    }
-  }
-}
-```
+The `appsscript.json` file already ships with the correct add-on manifest, including `oauthScopes` and the `addOns` block. Verify that it looks correct — no changes needed unless you want to customize the add-on name or logo URL.
 
 ---
 

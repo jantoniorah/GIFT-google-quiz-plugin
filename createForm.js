@@ -230,13 +230,11 @@ function addQuestion(form, question) {
       item = form.addTextItem().setTitle(stemText);
       item.setPoints(1);
 
+      // TextItem does not support setFeedbackForCorrect; show feedback in help text instead
       if (question.choices) {
         if (typeof question.choices === 'object') {
           if (question.choices.feedback) {
-            const correctFeedback = FormApp.createFeedback()
-              .setText(question.choices.feedback)
-              .build();
-            item.setFeedbackForCorrect(correctFeedback);
+            item.setHelpText(question.choices.feedback);
           }
         }
       }

@@ -1,10 +1,6 @@
 /**
- * @OnlyCurrentDoc
- *
- * The above comment directs Apps Script to limit the scope of file
- * access for this add-on. It specifies that this add-on will only
- * attempt to read or modify the files in which the add-on is used,
- * and not all of the user's files.
+ * GIFT Quiz Editor Plus — Google Forms Add-on
+ * Converts GIFT-formatted text into Google Forms quiz questions.
  */
 
 const ADDON_TITLE = 'GIFT Quiz Editor';
