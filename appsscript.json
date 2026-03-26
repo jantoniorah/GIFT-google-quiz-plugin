@@ -14,11 +14,6 @@
       "homepageTrigger": {
         "runFunction": "onOpen"
       }
-    },
-    "forms": {
-      "onFormOpenTrigger": {
-        "runFunction": "onOpen"
-      }
     }
   }
 }
