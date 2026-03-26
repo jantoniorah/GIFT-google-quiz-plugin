@@ -217,14 +217,11 @@ function addQuestion(form, question) {
           // If validation fails, fall back to no validation
         }
 
-        // Set feedback for correct answers
+        // TextItem does not support setFeedbackForCorrect; show accepted answers in help text instead
         const answerList = question.choices.map(function(c) {
           return stripHTML(c.text.text);
         }).join(", ");
-        const correctFb = FormApp.createFeedback()
-          .setText("Accepted answers: " + answerList)
-          .build();
-        item.setFeedbackForCorrect(correctFb);
+        item.setHelpText("Accepted answers: " + answerList);
       }
       item.setRequired(true);
       break;

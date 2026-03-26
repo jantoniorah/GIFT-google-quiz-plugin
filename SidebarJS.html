@@ -188,12 +188,15 @@
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
             const icon = typeIcons[q.type] || '?';
-            const title = q.title || truncate(stripPreviewHTML(q.stem.text), 50);
-            const typeBadge = q.type;
+            const stem = truncate(stripPreviewHTML(q.stem ? q.stem.text : ''), 60);
+            const title = q.title ? truncate(q.title, 40) : null;
             html += '<div class="preview-item">' +
+                '<span class="preview-num">' + (i + 1) + '.</span>' +
                 '<span class="preview-icon">' + escapeHtml(icon) + '</span>' +
-                '<span class="preview-type">' + escapeHtml(typeBadge) + '</span>' +
-                '<span class="preview-title">' + escapeHtml(title) + '</span>' +
+                '<span class="preview-type">' + escapeHtml(q.type) + '</span>' +
+                '<span class="preview-title">' +
+                    (title ? escapeHtml(title) + (stem ? ' <span class="preview-stem">— ' + escapeHtml(stem) + '</span>' : '') : escapeHtml(stem)) +
+                '</span>' +
                 '</div>';
         }
         preview.innerHTML = html;
