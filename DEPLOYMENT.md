@@ -37,7 +37,7 @@ Edit `.clasp.json` and replace the existing `scriptId` with your new one:
 
 ## Step 3 — Verify `appsscript.json`
 
-The `appsscript.json` file already ships with the correct add-on manifest, including `oauthScopes` and the `addOns` block. Verify that it looks correct — no changes needed unless you want to customize the add-on name or logo URL.
+The `appsscript.json` file already ships with the correct manifest, including `oauthScopes`. Verify that it looks correct. (Note: Editor Add-ons do not use the `addOns` block, which is exclusively for Workspace Add-ons).
 
 ---
 
