@@ -71,5 +71,5 @@ If this policy changes, the **Last updated** date at the top will be revised. Co
 For questions or concerns about this privacy policy, contact:
 
 **José Antonio Ahumada**
-jantoniorah@gmail.com
+dev.jahumada@gmail.com
 GitHub: [github.com/jantoniorah](https://github.com/jantoniorah)
