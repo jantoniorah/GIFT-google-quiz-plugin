@@ -1,3 +1,8 @@
+---
+layout: default
+title: Privacy Policy
+---
+
 # Privacy Policy — GIFT Quiz Editor Plus
 
 **Last updated: April 21, 2026**
